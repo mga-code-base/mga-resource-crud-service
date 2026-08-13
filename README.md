@@ -28,29 +28,6 @@ It operates strictly beneath `mga-resource-service` in a CQRS/Data-Layer Separat
 
 ---
 
-## 📡 Core API Controller Endpoints
-
-### Classes & Schedules Controller (`/crud/resources/classes`)
-* `POST /crud/resources/classes` - Save/create new fitness class schedule
-* `GET /crud/resources/classes/{id}` - Fetch class schedule details by ID
-* `GET /crud/resources/classes/all` - List all upcoming gym class schedules
-* `PUT /crud/resources/classes/{id}` - Update fitness class schedule or instructor details
-* `DELETE /crud/resources/classes/{id}` - Cancel/delete class schedule by ID
-
-### Bookings Controller (`/crud/resources/bookings`)
-* `POST /crud/resources/bookings` - Save new class booking reservation
-* `GET /crud/resources/bookings/{id}` - Fetch booking details by ID
-* `GET /crud/resources/bookings/member/{memberId}` - List all active bookings for a specific member
-* `DELETE /crud/resources/bookings/{id}` - Cancel class booking reservation by ID
-
-### Equipment & Facilities Controller (`/crud/resources/equipment`)
-* `POST /crud/resources/equipment` - Register new gym equipment/facility item
-* `GET /crud/resources/equipment/all` - List all registered gym equipment
-* `PUT /crud/resources/equipment/{id}/status` - Update operational/maintenance status of equipment
-* `DELETE /crud/resources/equipment/{id}` - Remove equipment record from database
-
----
-
 ## ⚙️ Build & Deployment Instructions
 # Standard JVM Run
 ./gradlew bootRun
