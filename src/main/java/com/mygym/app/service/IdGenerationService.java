@@ -1,8 +1,8 @@
 package com.mygym.app.service;
 
-import jakarta.annotation.PostConstruct;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -10,75 +10,55 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
-/**
- * Service managing atomic sequence counter updates in MongoDB for Branch, Grievance, and Notification IDs.
- */
+import jakarta.annotation.PostConstruct;
+
 @Service
 public class IdGenerationService {
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
+    private static final Logger LOGGER = LoggerFactory.getLogger(IdGenerationService.class);
+    private static final String COLLECTION_NAME = "_resources";
+    private static final String TARGET_ID = "1";
 
-    private final String COLLECTION_NAME = "_resources";
-    private final String TARGET_ID = "1";
+    private final MongoTemplate mongoTemplate;
+
+    public IdGenerationService(MongoTemplate mongoTemplate) {
+        this.mongoTemplate = mongoTemplate;
+    }
 
     @PostConstruct
     public void init() {
-        try {
-            Query query = new Query(Criteria.where("id").is(TARGET_ID));
-            boolean exists = mongoTemplate.exists(query, COLLECTION_NAME);
-            
-            if (!exists) {
-                throw new RuntimeException("Startup Error: The manual sequence document with id '" + TARGET_ID + "' was not found in '" + COLLECTION_NAME + "'.");
-            }
-            System.out.println("Resource ID Generation Service initialized successfully against MongoDB.");
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to verify Resource ID sequences in MongoDB", e);
+        if (!mongoTemplate.exists(sequenceQuery(), COLLECTION_NAME)) {
+            throw new IllegalStateException("Sequence document with id '" + TARGET_ID + "' was not found in '" + COLLECTION_NAME + "'");
         }
+        LOGGER.info("ID generation initialised against sequence document {}", TARGET_ID);
     }
 
-    private Long incrementAndGet(String fieldName) {
-        Query query = new Query(Criteria.where("id").is(TARGET_ID));
-        Update update = new Update().inc(fieldName, 1);
-        FindAndModifyOptions options = FindAndModifyOptions.options().returnNew(true);
-        Document updatedDoc = mongoTemplate.findAndModify(query, update, options, Document.class, COLLECTION_NAME);
-        if (updatedDoc == null) {
-            throw new RuntimeException("Failed to increment sequence field: " + fieldName + ". Verify document with id '" + TARGET_ID + "' exists.");
+    public String nextBranchId() {
+        return next("nextBranchId");
+    }
+
+    public String nextGrievanceId() {
+        return next("nextGrievanceId");
+    }
+
+    public String nextNotificationId() {
+        return next("nextNotificationId");
+    }
+
+    private String next(String fieldName) {
+        Document previous = mongoTemplate.findAndModify(
+                sequenceQuery(),
+                new Update().inc(fieldName, 1),
+                FindAndModifyOptions.options().returnNew(false),
+                Document.class,
+                COLLECTION_NAME);
+        if (previous == null || previous.get(fieldName) == null) {
+            throw new IllegalStateException("Failed to increment sequence field " + fieldName);
         }
-        return ((Number) updatedDoc.get(fieldName)).longValue();
+        return String.valueOf(((Number) previous.get(fieldName)).longValue());
     }
 
-    private Long currentValue(String fieldName) {
-        Query query = new Query(Criteria.where("id").is(TARGET_ID));
-        Document doc = mongoTemplate.findOne(query, Document.class, COLLECTION_NAME);
-        
-        if (doc == null) {
-            throw new RuntimeException("Could not fetch sequence value for field: " + fieldName + " with id: " + TARGET_ID);
-        }
-        return ((Number) doc.get(fieldName)).longValue();
-    }
-
-    public Long getBranchId() {
-        return currentValue("nextBranchId");
-    }    
-
-    public void incrementBranchId() {
-        incrementAndGet("nextBranchId");
-    }
-
-    public Long getGrievanceId() {
-        return currentValue("nextGrievanceId");
-    }    
-
-    public void incrementGrievanceId() {
-        incrementAndGet("nextGrievanceId");
-    }
-
-    public Long getNotificationId() {
-        return currentValue("nextNotificationId");
-    }    
-
-    public void incrementNotificationId() {
-        incrementAndGet("nextNotificationId");
+    private Query sequenceQuery() {
+        return new Query(Criteria.where("id").is(TARGET_ID));
     }
 }

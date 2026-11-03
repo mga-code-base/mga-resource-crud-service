@@ -30,30 +30,27 @@ class NotificationCrudServiceTest {
     @Test
     @DisplayName("Should create notification and assign ID sequence")
     void testCreateNotification_Success() {
-        Notification notification = new Notification();
-        notification.setMessage("Gym closed on holiday");
+        Notification notification = new Notification(null, null, "Gym closed on holiday", null, null, null);
 
-        when(idGenerationService.getNotificationId()).thenReturn(901L);
+        when(idGenerationService.nextNotificationId()).thenReturn("901");
         when(repository.save(any(Notification.class))).thenAnswer(i -> i.getArgument(0));
 
         Notification result = notificationCrudService.createNotification(notification);
 
         assertNotNull(result);
-        assertEquals("901", result.getNotificationId());
-        verify(idGenerationService, times(1)).incrementNotificationId();
+        assertEquals("901", result.notificationId());
     }
 
     @Test
     @DisplayName("Should fetch notification by ID")
     void testGetNotificationById_Success() {
-        Notification notification = new Notification();
-        notification.setNotificationId("N-901");
+        Notification notification = new Notification("N-901", null, null, null, null, null);
 
         when(repository.findByNotificationId("N-901")).thenReturn(Optional.of(notification));
 
         Notification result = notificationCrudService.getNotificationById("N-901");
 
         assertNotNull(result);
-        assertEquals("N-901", result.getNotificationId());
+        assertEquals("N-901", result.notificationId());
     }
 }

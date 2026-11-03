@@ -1,10 +1,10 @@
 package com.mygym.app.service;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.springframework.stereotype.Service;
 
@@ -14,107 +14,89 @@ import com.mygym.app.models.BranchWrapper;
 import com.mygym.app.models.Equipment;
 import com.mygym.app.repository.BranchRepository;
 
-/**
- * Service managing gym branch registrations, equipment inventories, and administrative assignments.
- */
 @Service
 public class BranchCrudService {
 
     private final BranchRepository repository;
-    private final IdGenerationService service;
-    
-    public BranchCrudService(BranchRepository repository, IdGenerationService service) {
-        this.service = service;
+    private final IdGenerationService idGenerationService;
+
+    public BranchCrudService(BranchRepository repository, IdGenerationService idGenerationService) {
         this.repository = repository;
+        this.idGenerationService = idGenerationService;
     }
 
     public Branch createBranch(Branch branch) {
-        List<Equipment> equipments = branch.getEquipments();
-        AtomicInteger equipmentId = new AtomicInteger(0);
-        if (Objects.nonNull(equipments)) {
-            equipments.forEach(equipment -> 
-                equipment.setEquipmentId(equipmentId.getAndIncrement()));
-            branch.setEquipments(equipments);
-        }
-        branch.setBranchId(String.valueOf(service.getBranchId()));
-        branch.setAdminIds(Arrays.asList(String.valueOf(service.getBranchId())));
-        service.incrementBranchId();
-        return repository.save(branch);
+        String branchId = idGenerationService.nextBranchId();
+        List<Equipment> equipments = branch.equipments() == null ? null
+                : IntStream.range(0, branch.equipments().size())
+                        .mapToObj(index -> branch.equipments().get(index).withEquipmentId(index))
+                        .collect(Collectors.toCollection(ArrayList::new));
+        return repository.save(branch
+                .withBranchId(branchId)
+                .withAdminIds(List.of(branchId))
+                .withEquipments(equipments));
     }
 
     public BranchWrapper getAllBranches() {
         return new BranchWrapper(repository.findAll());
     }
-    
+
     public BranchNameWrapper getAllBranchNames() {
-        List<Branch> branches = repository.findAll();
-        if (Objects.nonNull(branches) && !branches.isEmpty()) {
-            return new BranchNameWrapper(
-                    branches.stream()
-                        .collect(Collectors.toMap(Branch::getBranchId, Branch::getName)));
-        }
-        return new BranchNameWrapper();
+        return new BranchNameWrapper(repository.findAll().stream()
+                .collect(Collectors.toMap(Branch::branchId, Branch::name)));
     }
 
     public Branch getBranchById(String id) {
         return repository.findByBranchId(id)
-                .orElseThrow(() -> new RuntimeException("Branch not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Branch not found with id: " + id));
     }
 
     public Branch updateBranch(String id, Branch updatedData) {
         Branch existing = getBranchById(id);
-        existing.setName(updatedData.getName());
-        existing.setPincode(updatedData.getPincode());
-        return repository.save(existing);
+        return repository.save(new Branch(existing._id(), existing.branchId(), updatedData.name(), existing.adminIds(),
+                updatedData.pincode(), existing.address(), existing.city(), existing.equipments(), existing.isActive()));
     }
-    
+
     public Branch addEquipmentsInBranch(String branchId, Equipment equipment) {
-        Branch branch = repository.findByBranchId(branchId).orElse(null);
-        if (Objects.nonNull(branch) && Objects.nonNull(branch.getEquipments())) {
-            List<Equipment> equipmentList = branch.getEquipments();
-            if (equipmentList.stream().noneMatch(equip -> equip.getName().matches(equipment.getName()))) {
-                equipment.setEquipmentId(equipmentList.size());
-                equipmentList.add(equipment);
-                branch.setEquipments(equipmentList);
-                repository.save(branch);
-                return branch;
-            }
-            return new Branch("-1");
-        }
-        return new Branch("-1");
+        return repository.findByBranchId(branchId)
+                .filter(branch -> Objects.nonNull(branch.equipments()))
+                .filter(branch -> branch.equipments().stream().noneMatch(existing -> Objects.equals(existing.name(), equipment.name())))
+                .map(branch -> {
+                    List<Equipment> equipments = new ArrayList<>(branch.equipments());
+                    equipments.add(equipment.withEquipmentId(equipments.size()));
+                    return repository.save(branch.withEquipments(equipments));
+                })
+                .orElse(Branch.notFound());
     }
 
     public void deleteBranch(String id) {
         repository.deleteByBranchId(id);
     }
-    
+
     public Branch getBranchByAdminId(String adminId) {
-        return repository.findByAdminId(adminId).orElse(new Branch());
+        return repository.findByAdminId(adminId)
+                .orElse(new Branch(null, null, null, null, null, null, null, null, null));
     }
 
     public Branch updateEquipmentsInBranch(String branchId, Equipment equipment) {
-        Branch branch = repository.findByBranchId(branchId).orElse(null);
-        if (Objects.nonNull(branch) && Objects.nonNull(branch.getEquipments())
-                && equipment.getEquipmentId() < branch.getEquipments().size()) {
-            List<Equipment> equipmentList = branch.getEquipments();
-            equipmentList.set(equipment.getEquipmentId(), equipment);
-            branch.setEquipments(equipmentList);
-            repository.save(branch);
-            return branch;
-        }
-        return new Branch("-1");
+        return repository.findByBranchId(branchId)
+                .filter(branch -> Objects.nonNull(branch.equipments()))
+                .filter(branch -> equipment.equipmentId() != null && equipment.equipmentId() < branch.equipments().size())
+                .map(branch -> {
+                    List<Equipment> equipments = new ArrayList<>(branch.equipments());
+                    equipments.set(equipment.equipmentId(), equipment);
+                    return repository.save(branch.withEquipments(equipments));
+                })
+                .orElse(Branch.notFound());
     }
 
-    public Boolean deleteByAdminId(String adminid) {
-        repository.findByBranchId(adminid).ifPresent(repository::delete);
+    public Boolean deleteByAdminId(String adminId) {
+        repository.findByBranchId(adminId).ifPresent(repository::delete);
         return true;
     }
 
     public Boolean approveBranch(String id) {
-        repository.findByBranchId(id).ifPresent(branch -> {
-            branch.setIsActive(true);
-            repository.save(branch);
-        });
+        repository.findByBranchId(id).ifPresent(branch -> repository.save(branch.withIsActive(true)));
         return true;
     }
 }

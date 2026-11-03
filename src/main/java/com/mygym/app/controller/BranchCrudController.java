@@ -37,7 +37,7 @@ public class BranchCrudController {
 
     @PostMapping
     public String create(@RequestBody Branch branch) {
-        return service.createBranch(branch).getBranchId();
+        return service.createBranch(branch).branchId();
     }
 
     @GetMapping(ALL_ENDPOINT)

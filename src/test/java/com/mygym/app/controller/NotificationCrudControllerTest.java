@@ -27,7 +27,7 @@ class NotificationCrudControllerTest {
     @Test
     @DisplayName("Should create notification entity")
     void testCreate_Success() {
-        Notification notification = new Notification();
+        Notification notification = new Notification(null, null, null, null, null, null);
         when(service.createNotification(any(Notification.class))).thenReturn(notification);
 
         Notification result = controller.create(notification);
@@ -39,7 +39,7 @@ class NotificationCrudControllerTest {
     @Test
     @DisplayName("Should read all notifications")
     void testReadAll_Success() {
-        when(service.getAllNotifications()).thenReturn(List.of(new Notification()));
+        when(service.getAllNotifications()).thenReturn(List.of(new Notification(null, null, null, null, null, null)));
 
         List<Notification> result = controller.readAll();
 

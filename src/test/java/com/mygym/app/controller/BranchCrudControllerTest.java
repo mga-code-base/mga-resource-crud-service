@@ -30,8 +30,7 @@ class BranchCrudControllerTest {
     @Test
     @DisplayName("Should create branch and return generated branch ID")
     void testCreate_Success() {
-        Branch branch = new Branch();
-        branch.setBranchId("B-101");
+        Branch branch = new Branch(null, "B-101", null, null, null, null, null, null, null);
 
         when(service.createBranch(any(Branch.class))).thenReturn(branch);
 
@@ -44,19 +43,19 @@ class BranchCrudControllerTest {
     @Test
     @DisplayName("Should fetch all branches wrapper")
     void testFetchAll_Success() {
-        BranchWrapper wrapper = new BranchWrapper(List.of(new Branch()));
+        BranchWrapper wrapper = new BranchWrapper(List.of(new Branch(null, null, null, null, null, null, null, null, null)));
         when(service.getAllBranches()).thenReturn(wrapper);
 
         BranchWrapper result = controller.fetchAll();
 
         assertNotNull(result);
-        verify(service, times(1)).getAllBranches();
+        verify(service, times(1)).allBranches();
     }
 
     @Test
     @DisplayName("Should fetch all branch names wrapper")
     void testGetAllBrancheNames_Success() {
-        BranchNameWrapper wrapper = new BranchNameWrapper();
+        BranchNameWrapper wrapper = new BranchNameWrapper(null);
         when(service.getAllBranchNames()).thenReturn(wrapper);
 
         BranchNameWrapper result = controller.getAllBrancheNames();
@@ -68,15 +67,14 @@ class BranchCrudControllerTest {
     @Test
     @DisplayName("Should read branch by ID")
     void testReadById_Success() {
-        Branch branch = new Branch();
-        branch.setBranchId("B-101");
+        Branch branch = new Branch(null, "B-101", null, null, null, null, null, null, null);
 
         when(service.getBranchById("B-101")).thenReturn(branch);
 
         Branch result = controller.readById("B-101");
 
         assertNotNull(result);
-        assertEquals("B-101", result.getBranchId());
+        assertEquals("B-101", result.branchId());
     }
 
     @Test
@@ -93,8 +91,8 @@ class BranchCrudControllerTest {
     @Test
     @DisplayName("Should add equipments to branch")
     void testAddEquipmentsInBranch_Success() {
-        Branch branch = new Branch();
-        Equipment equipment = new Equipment();
+        Branch branch = new Branch(null, null, null, null, null, null, null, null, null);
+        Equipment equipment = new Equipment(null, null, null, null, null);
 
         when(service.addEquipmentsInBranch("B-101", equipment)).thenReturn(branch);
 

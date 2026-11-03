@@ -44,7 +44,7 @@ public class GrievanceCrudController {
 
     @PostMapping
     public String create(@RequestBody Grievance grievance) {
-        return service.createGrievance(grievance).getGrievanceId();
+        return service.createGrievance(grievance).grievanceId();
     }
 
     @GetMapping

@@ -6,6 +6,7 @@ import com.mygym.app.repository.GrievanceRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,23 +33,21 @@ class GrievanceCrudServiceTest {
     @Test
     @DisplayName("Should create grievance and increment grievance ID sequence")
     void testCreateGrievance_Success() {
-        Grievance grievance = new Grievance();
-        grievance.setDescription("AC not working");
+        Grievance grievance = new Grievance(null, null, null, null, null, null, null, "AC not working", null, null);
 
-        when(idGenerationService.getGrievanceId()).thenReturn(501L);
+        when(idGenerationService.nextGrievanceId()).thenReturn("501");
         when(repository.save(any(Grievance.class))).thenAnswer(i -> i.getArgument(0));
 
         Grievance result = grievanceCrudService.createGrievance(grievance);
 
         assertNotNull(result);
-        assertEquals("501", result.getGrievanceId());
-        verify(idGenerationService, times(1)).incrementGrievanceId();
+        assertEquals("501", result.grievanceId());
     }
 
     @Test
     @DisplayName("Should fetch all active grievances wrapped")
     void testGetAllActiveGrievances_Success() {
-        when(repository.findAllActiveGrievances()).thenReturn(List.of(new Grievance()));
+        when(repository.findAllActiveGrievances()).thenReturn(List.of(new Grievance(null, null, null, null, null, null, null, null, null, null)));
 
         GrievanceWrapper result = grievanceCrudService.getAllActiveGrievances();
 
@@ -59,20 +58,18 @@ class GrievanceCrudServiceTest {
     @Test
     @DisplayName("Should resolve grievance and update closure date")
     void testUpdateGrienvance_Success() {
-        Grievance grievance = new Grievance();
-        grievance.setGrievanceId("G-501");
-        grievance.setResolution("Fixed AC unit");
+        Grievance grievance = new Grievance(null, "G-501", null, null, null, null, null, null, "Fixed AC unit", null);
 
-        Grievance existing = new Grievance();
-        existing.setGrievanceId("G-501");
+        Grievance existing = new Grievance(null, "G-501", null, null, null, null, null, null, null, null);
 
         when(repository.findByGrievanceId("G-501")).thenReturn(Optional.of(existing));
 
         Boolean updated = grievanceCrudService.updateGrienvance(grievance);
 
         assertTrue(updated);
-        assertEquals("Fixed AC unit", existing.getResolution());
-        assertNotNull(existing.getClosureDate());
-        verify(repository, times(1)).save(existing);
+        ArgumentCaptor<Grievance> saved = ArgumentCaptor.forClass(Grievance.class);
+        verify(repository, times(1)).save(saved.capture());
+        assertEquals("Fixed AC unit", saved.getValue().resolution());
+        assertNotNull(saved.getValue().closureDate());
     }
 }

@@ -28,7 +28,7 @@ class GrievanceCrudControllerTest {
     @Test
     @DisplayName("Should fetch all active grievances wrapper")
     void testGetAllGrievances_Success() {
-        GrievanceWrapper wrapper = new GrievanceWrapper(List.of(new Grievance()));
+        GrievanceWrapper wrapper = new GrievanceWrapper(List.of(new Grievance(null, null, null, null, null, null, null, null, null, null)));
         when(service.getAllActiveGrievances()).thenReturn(wrapper);
 
         GrievanceWrapper result = controller.getAllGrievances();
@@ -40,8 +40,7 @@ class GrievanceCrudControllerTest {
     @Test
     @DisplayName("Should create grievance and return ID")
     void testCreate_Success() {
-        Grievance grievance = new Grievance();
-        grievance.setGrievanceId("G-501");
+        Grievance grievance = new Grievance(null, "G-501", null, null, null, null, null, null, null, null);
 
         when(service.createGrievance(any(Grievance.class))).thenReturn(grievance);
 
@@ -53,15 +52,14 @@ class GrievanceCrudControllerTest {
     @Test
     @DisplayName("Should read grievance by ID")
     void testReadById_Success() {
-        Grievance grievance = new Grievance();
-        grievance.setGrievanceId("G-501");
+        Grievance grievance = new Grievance(null, "G-501", null, null, null, null, null, null, null, null);
 
         when(service.getGrievanceById("G-501")).thenReturn(grievance);
 
         Grievance result = controller.readById("G-501");
 
         assertNotNull(result);
-        assertEquals("G-501", result.getGrievanceId());
+        assertEquals("G-501", result.grievanceId());
     }
 
     @Test

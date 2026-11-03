@@ -1,22 +1,25 @@
 package com.mygym.app.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.bson.Document;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class IdGenerationServiceTest {
@@ -28,41 +31,40 @@ class IdGenerationServiceTest {
     private IdGenerationService idGenerationService;
 
     @Test
-    @DisplayName("Should pass init when resource sequence document exists")
-    void testInit_Success() {
+    @DisplayName("Should pass init when sequence document exists in MongoDB")
+    void testInit_SequenceDocumentExists_Success() {
         when(mongoTemplate.exists(any(Query.class), eq("_resources"))).thenReturn(true);
 
         assertDoesNotThrow(() -> idGenerationService.init());
     }
 
     @Test
-    @DisplayName("Should throw RuntimeException during init when resource sequence document is missing")
-    void testInit_NotFound_ThrowsException() {
+    @DisplayName("Should fail init when sequence document is missing")
+    void testInit_SequenceDocumentMissing_ThrowsException() {
         when(mongoTemplate.exists(any(Query.class), eq("_resources"))).thenReturn(false);
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> idGenerationService.init());
-        assertTrue(exception.getMessage().contains("Failed to verify Resource ID sequences in MongoDB"));
+        assertThrows(IllegalStateException.class, () -> idGenerationService.init());
     }
 
     @Test
-    @DisplayName("Should fetch current branch ID sequence value")
-    void testGetBranchId_Success() {
-        Document doc = new Document("nextBranchId", 15L);
-        when(mongoTemplate.findOne(any(Query.class), eq(Document.class), eq("_resources"))).thenReturn(doc);
-
-        Long id = idGenerationService.getBranchId();
-
-        assertEquals(15L, id);
-    }
-
-    @Test
-    @DisplayName("Should increment branch ID sequence")
-    void testIncrementBranchId_Success() {
-        Document updatedDoc = new Document("nextBranchId", 16L);
+    @DisplayName("Should reserve an ID with a single atomic increment and return the pre-increment value")
+    void testNextBranchId_SingleAtomicOperation() {
         when(mongoTemplate.findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class), eq(Document.class), eq("_resources")))
-                .thenReturn(updatedDoc);
+                .thenReturn(new Document("nextBranchId", 105L));
 
-        assertDoesNotThrow(() -> idGenerationService.incrementBranchId());
-        verify(mongoTemplate, times(1)).findAndModify(any(), any(), any(), eq(Document.class), eq("_resources"));
+        assertEquals("105", idGenerationService.nextBranchId());
+
+        ArgumentCaptor<FindAndModifyOptions> options = ArgumentCaptor.forClass(FindAndModifyOptions.class);
+        verify(mongoTemplate).findAndModify(any(Query.class), any(Update.class), options.capture(), eq(Document.class), eq("_resources"));
+        assertEquals(false, options.getValue().isReturnNew());
+    }
+
+    @Test
+    @DisplayName("Should fail when the sequence field cannot be incremented")
+    void testNextNotificationId_MissingDocument_Throws() {
+        when(mongoTemplate.findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class), eq(Document.class), eq("_resources")))
+                .thenReturn(null);
+
+        assertThrows(IllegalStateException.class, () -> idGenerationService.nextNotificationId());
     }
 }

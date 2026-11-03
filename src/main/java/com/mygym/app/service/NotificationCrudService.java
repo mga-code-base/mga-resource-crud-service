@@ -1,28 +1,25 @@
 package com.mygym.app.service;
 
-import com.mygym.app.models.Notification;
-import com.mygym.app.repository.NotificationRepository;
-import org.springframework.stereotype.Service;
 import java.util.List;
 
-/**
- * Service managing broadcast system notification entities and admin message logs.
- */
+import org.springframework.stereotype.Service;
+
+import com.mygym.app.models.Notification;
+import com.mygym.app.repository.NotificationRepository;
+
 @Service
 public class NotificationCrudService {
 
     private final NotificationRepository repository;
-    private final IdGenerationService service;
-    
-    public NotificationCrudService(NotificationRepository repository, IdGenerationService service) {
-        this.service = service;
+    private final IdGenerationService idGenerationService;
+
+    public NotificationCrudService(NotificationRepository repository, IdGenerationService idGenerationService) {
         this.repository = repository;
+        this.idGenerationService = idGenerationService;
     }
 
     public Notification createNotification(Notification notification) {
-        notification.setNotificationId(String.valueOf(service.getNotificationId()));
-        service.incrementNotificationId();
-        return repository.save(notification);
+        return repository.save(notification.withNotificationId(idGenerationService.nextNotificationId()));
     }
 
     public List<Notification> getAllNotifications() {
@@ -31,20 +28,16 @@ public class NotificationCrudService {
 
     public Notification getNotificationById(String id) {
         return repository.findByNotificationId(id)
-                .orElseThrow(() -> new RuntimeException("Notification not found with id: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Notification not found with id: " + id));
     }
 
     public Notification updateNotification(String id, Notification updatedData) {
         Notification existing = getNotificationById(id);
-        existing.setMessageType(updatedData.getMessageType());
-        existing.setMessage(updatedData.getMessage());
-        existing.setImage(updatedData.getImage());
-        existing.setGeneratingAdmin(updatedData.getGeneratingAdmin());
-        return repository.save(existing);
+        return repository.save(new Notification(existing.notificationId(), updatedData.messageType(),
+                updatedData.message(), updatedData.image(), updatedData.generatingAdmin(), existing.publishStatusCheck()));
     }
 
     public void deleteNotification(String id) {
-        Notification existing = getNotificationById(id);
-        repository.delete(existing);
+        repository.delete(getNotificationById(id));
     }
 }
