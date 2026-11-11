@@ -83,6 +83,10 @@ tasks.named('processAot') {
     args '--spring.profiles.active=native', '--activatedEnv=PRD', '--eureka.client.enabled=false'
 }
 
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
 contracts {
     baseClassForTests = 'com.mygym.app.contract.ContractVerifierBase'
 }
