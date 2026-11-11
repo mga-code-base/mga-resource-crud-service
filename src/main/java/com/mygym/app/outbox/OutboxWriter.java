@@ -3,6 +3,7 @@ package com.mygym.app.outbox;
 import java.time.Clock;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ public class OutboxWriter {
     private final String broadcastTopic;
     private final Clock clock;
 
+    @Autowired
     public OutboxWriter(MongoTemplate mongoTemplate, @Value("${mga.outbox.broadcast-topic:broadcast-messages}") String broadcastTopic) {
         this(mongoTemplate, broadcastTopic, Clock.systemUTC());
     }

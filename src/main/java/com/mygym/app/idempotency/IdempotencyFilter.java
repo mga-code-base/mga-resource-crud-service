@@ -11,6 +11,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -33,6 +34,7 @@ public class IdempotencyFilter extends OncePerRequestFilter {
     private final MongoTemplate mongoTemplate;
     private final Clock clock;
 
+    @Autowired
     public IdempotencyFilter(MongoTemplate mongoTemplate) {
         this(mongoTemplate, Clock.systemUTC());
     }

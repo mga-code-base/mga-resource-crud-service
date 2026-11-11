@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -32,6 +33,7 @@ public class OutboxRelay {
     private final int batchSize;
     private final Clock clock;
 
+    @Autowired
     public OutboxRelay(MongoTemplate mongoTemplate, KafkaTemplate<String, Object> kafkaTemplate,
             @Value("${mga.outbox.batch-size:100}") int batchSize) {
         this(mongoTemplate, kafkaTemplate, batchSize, Clock.systemUTC());
