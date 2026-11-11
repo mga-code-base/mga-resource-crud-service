@@ -49,7 +49,7 @@ class BranchCrudControllerTest {
         BranchWrapper result = controller.fetchAll();
 
         assertNotNull(result);
-        verify(service, times(1)).allBranches();
+        verify(service, times(1)).getAllBranches();
     }
 
     @Test
