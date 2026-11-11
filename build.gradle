@@ -80,7 +80,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.named('processAot') {
-    args '--spring.profiles.active=native', '--activatedEnv=PRD'
+    args '--spring.profiles.active=native', '--activatedEnv=PRD', '--eureka.client.enabled=false'
 }
 
 contracts {
