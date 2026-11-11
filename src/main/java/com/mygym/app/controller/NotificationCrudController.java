@@ -5,6 +5,10 @@ import static com.mygym.app.util.ResourceCrudConstants.NOTIFICATION_CRUD_REST_BA
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
+
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mygym.app.models.Notification;
 import com.mygym.app.service.NotificationCrudService;
+import com.mygym.app.validation.OnCreate;
 
 @RestController
 @RequestMapping(NOTIFICATION_CRUD_REST_BASE)
@@ -28,7 +33,7 @@ public class NotificationCrudController {
     }
 
     @PostMapping
-    public Notification create(@RequestBody Notification notification) {
+    public Notification create(@Validated({Default.class, OnCreate.class}) @RequestBody Notification notification) {
         return service.createNotification(notification);
     }
 
@@ -43,7 +48,7 @@ public class NotificationCrudController {
     }
 
     @PutMapping(ID_PLACEHOLDER_ENDPOINT)
-    public Notification update(@PathVariable String id, @RequestBody Notification notification) {
+    public Notification update(@PathVariable String id, @Valid @RequestBody Notification notification) {
         return service.updateNotification(id, notification);
     }
 

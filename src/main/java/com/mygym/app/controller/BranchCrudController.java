@@ -10,6 +10,10 @@ import static com.mygym.app.util.ResourceCrudConstants.EQUIPMENTS_UPDATE;
 import static com.mygym.app.util.ResourceCrudConstants.GET_BRANCH_BY_ADMINID;
 import static com.mygym.app.util.ResourceCrudConstants.ID_PLACEHOLDER_ENDPOINT;
 
+import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
+
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +28,7 @@ import com.mygym.app.models.BranchNameWrapper;
 import com.mygym.app.models.BranchWrapper;
 import com.mygym.app.models.Equipment;
 import com.mygym.app.service.BranchCrudService;
+import com.mygym.app.validation.OnCreate;
 
 @RestController
 @RequestMapping(BRANCHES_CRUD_REST_BASE)
@@ -36,7 +41,7 @@ public class BranchCrudController {
     }
 
     @PostMapping
-    public String create(@RequestBody Branch branch) {
+    public String create(@Validated({Default.class, OnCreate.class}) @RequestBody Branch branch) {
         return service.createBranch(branch).branchId();
     }
 
@@ -56,7 +61,7 @@ public class BranchCrudController {
     }
 
     @PutMapping(ID_PLACEHOLDER_ENDPOINT)
-    public Branch update(@PathVariable String id, @RequestBody Branch branch) {
+    public Branch update(@PathVariable String id, @Valid @RequestBody Branch branch) {
         return service.updateBranch(id, branch);
     }
 
@@ -67,12 +72,12 @@ public class BranchCrudController {
     }
     
     @PutMapping(EQUIPMENTS_ADD)
-    public Branch addEquipmentsInBranch(@PathVariable(name = "id") String branchId, @RequestBody Equipment equipments) {
+    public Branch addEquipmentsInBranch(@PathVariable(name = "id") String branchId, @Valid @RequestBody Equipment equipments) {
     	return service.addEquipmentsInBranch(branchId, equipments);
     }
     
     @PutMapping(EQUIPMENTS_UPDATE)
-    public Branch updateEquipmentsInBranch(@PathVariable(name = "id") String branchId,@RequestBody Equipment equipments) {
+    public Branch updateEquipmentsInBranch(@PathVariable(name = "id") String branchId,@Valid @RequestBody Equipment equipments) {
     	return service.updateEquipmentsInBranch(branchId, equipments);
     }
     

@@ -1,6 +1,7 @@
 package com.mygym.app.service;
 
 import com.mygym.app.models.Notification;
+import com.mygym.app.outbox.OutboxWriter;
 import com.mygym.app.repository.NotificationRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,9 @@ class NotificationCrudServiceTest {
     @Mock
     private IdGenerationService idGenerationService;
 
+    @Mock
+    private OutboxWriter outbox;
+
     @InjectMocks
     private NotificationCrudService notificationCrudService;
 
@@ -39,6 +43,7 @@ class NotificationCrudServiceTest {
 
         assertNotNull(result);
         assertEquals("901", result.notificationId());
+        verify(outbox).notificationCreated(result);
     }
 
     @Test

@@ -13,6 +13,7 @@ import com.mygym.app.models.BranchNameWrapper;
 import com.mygym.app.models.BranchWrapper;
 import com.mygym.app.models.Equipment;
 import com.mygym.app.repository.BranchRepository;
+import com.mygym.app.web.NotFoundException;
 
 @Service
 public class BranchCrudService {
@@ -48,7 +49,7 @@ public class BranchCrudService {
 
     public Branch getBranchById(String id) {
         return repository.findByBranchId(id)
-                .orElseThrow(() -> new IllegalArgumentException("Branch not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Branch not found with id: " + id));
     }
 
     public Branch updateBranch(String id, Branch updatedData) {

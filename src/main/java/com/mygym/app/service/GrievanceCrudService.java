@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.mygym.app.models.Grievance;
 import com.mygym.app.models.GrievanceWrapper;
 import com.mygym.app.repository.GrievanceRepository;
+import com.mygym.app.web.NotFoundException;
 
 @Service
 public class GrievanceCrudService {
@@ -43,7 +44,7 @@ public class GrievanceCrudService {
 
     public Grievance getGrievanceById(String id) {
         return repository.findByGrievanceId(id)
-                .orElseThrow(() -> new IllegalArgumentException("Grievance not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Grievance not found with id: " + id));
     }
 
     public Grievance updateGrievance(String id, Grievance updatedData) {

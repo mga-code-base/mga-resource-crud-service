@@ -1,0 +1,11 @@
+description: Branch ids mapped to branch names, used by sign-up screens
+request:
+  method: GET
+  url: /crud/branches/allbranchnames
+response:
+  status: 200
+  headers:
+    Content-Type: application/json
+  body:
+    allBrancheNames:
+      "1": Andheri West

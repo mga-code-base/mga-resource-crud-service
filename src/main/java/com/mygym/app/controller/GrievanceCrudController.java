@@ -9,6 +9,10 @@ import static com.mygym.app.util.ResourceCrudConstants.ID_PLACEHOLDER_ENDPOINT;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+import jakarta.validation.groups.Default;
+
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.mygym.app.models.Grievance;
 import com.mygym.app.models.GrievanceWrapper;
 import com.mygym.app.service.GrievanceCrudService;
+import com.mygym.app.validation.OnCreate;
 
 @RestController
 @RequestMapping(GRIEVANCE_CRUD_REST_BASE)
@@ -43,7 +48,7 @@ public class GrievanceCrudController {
     }
 
     @PostMapping
-    public String create(@RequestBody Grievance grievance) {
+    public String create(@Validated({Default.class, OnCreate.class}) @RequestBody Grievance grievance) {
         return service.createGrievance(grievance).grievanceId();
     }
 
@@ -58,7 +63,7 @@ public class GrievanceCrudController {
     }
 
     @PutMapping(ID_PLACEHOLDER_ENDPOINT)
-    public Grievance update(@PathVariable String id, @RequestBody Grievance grievance) {
+    public Grievance update(@PathVariable String id, @Valid @RequestBody Grievance grievance) {
         return service.updateGrievance(id, grievance);
     }
 
@@ -79,7 +84,7 @@ public class GrievanceCrudController {
     }
     
     @PutMapping
-    public Boolean updateGrienvance(@RequestBody Grievance grievance) {
+    public Boolean updateGrienvance(@Valid @RequestBody Grievance grievance) {
     	if(service.updateGrienvance(grievance)) 
     		return true;
     	return false;
